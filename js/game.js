@@ -32,7 +32,7 @@ class Game extends EventTarget {
         acornArgs.ctx = ctx;
         acornArgs.target = this.player;
         acornArgs.spriteLoader = new SpriteLoader(acornArgs.spriteSrc, 1, 1);
-        this.acornSpawner = new Spawner(ctx, 200, acornArgs);
+        this.acornSpawner = new Spawner(ctx, 300, acornArgs);
         
         // Game logic
         this.frameTimer = -1;
@@ -65,13 +65,14 @@ class Game extends EventTarget {
         // Hitting the poacher
         this.addEventListener(savatteArgs.event, (e) => {
             this.enemyHP--;
-            
-            console.log("Poacher hit!", e.detail, "\nHP left:", this.playerHP);
+
+            console.log("Poacher hit!", e.detail, "\nHP left:", this.enemyHP);
         })
         
         // Player gets hit
         this.addEventListener(bulletArgs.event, (e) => {
             this.playerHP--;
+            this.savatteCollected = false;
             this.player.takeDamage();
 
             console.log("Player hit!", e.detail, "\nHP left:", this.playerHP);

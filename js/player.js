@@ -26,6 +26,8 @@ class Player {
         this.currentAnimation = "fly"; 
         this.frameRate = 4;
         this.frameCounter = 0;
+
+        this.framesSinceHurt = 0;
     }
 
     // Update player
@@ -42,6 +44,15 @@ class Player {
         // Visuals logic
         if (game.savatteCollected) {
             this.currentAnimation = "shoot";
+        }
+
+        if (this.currentAnimation == "hurt") {
+            this.framesSinceHurt++;
+
+            if (this.framesSinceHurt == 24) {
+                this.framesSinceHurt = 0;
+                this.currentAnimation = "fly"; // Loses savatte
+            }
         }
 
         // Jump
@@ -105,9 +116,6 @@ class Player {
     // Invoked by Game when player gets hit
     takeDamage() {
         this.currentAnimation = "hurt";
-        setTimeout(() => {
-            this.currentAnimation = "fly"
-        }, 500);
     }
 }
 

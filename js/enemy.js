@@ -17,10 +17,13 @@ class Enemy {
         this.startY = y;
         this.speedY = 2;
         this.direction = 1;
-        this.range = 150;
+        this.lastDirection = 0;
 
         this.moveInterval = 120;
         this.shootInterval = 90;
+        
+        this.shootInterval = 90;
+        this.nextShotDelay = this.shootInterval;
         this.lastShotFrame = 0;
 
         // Animation logic
@@ -60,6 +63,12 @@ class Enemy {
             }
         }
 
+        // Does not move in the same direction as last
+        if (this.direction == this.lastDirection) {
+            this.direction = (this.direction + 1) % 3;
+            this.lastDirection = this.direction;
+        }
+
         // Set the enemy's range of motion here
         this.y += this.speedY * this.direction;
         this.y = Math.min(
@@ -68,9 +77,13 @@ class Enemy {
         );
 
         // Pew pew
-        if (game.frameTimer - this.lastShotFrame >= this.shootInterval) {
+        if (game.frameTimer - this.lastShotFrame >= this.nextShotDelay) {
             this.shoot(game);
             this.lastShotFrame = game.frameTimer;
+
+            // Randomises when to shoot his next shot
+            const rndOffset = Math.floor(Math.random() * 60) - 30;
+            this.nextShotDelay =  Math.max(30, this.shootInterval + rndOffset);
         }
     }
 

@@ -12,8 +12,14 @@ class Spawner {
 
          if (game.frameTimer % rndSpawn === 0) {
             const x = game.width + 100; // Starts offscreen
-            const y = Math.random() * ((game.height * 0.8) - this.collectableArgs.height) + this.collectableArgs.height / 2;
-            
+            let y = Math.random() * ((game.height * 0.8) - this.collectableArgs.height) + this.collectableArgs.height / 2;
+
+            // Clamp to region
+            y = Math.min(
+                Math.max(game.height * 0.2, y), 
+                (game.height * 0.8 ) - this.collectableArgs.height / 2
+            );
+
             this.collectableArgs.x = x;
             this.collectableArgs.y = y;
 
