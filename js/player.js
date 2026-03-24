@@ -6,8 +6,8 @@ class Player {
     constructor(ctx) {
         this.ctx = ctx;
 
-        this.x = 100;
-        this.y = 250;
+        this.x = 200;
+        this.y = 200;
         this.width  = 200;
         this.height = 200;
         this.dead = false;
@@ -20,7 +20,8 @@ class Player {
         this.animations = {
             fly: new SpriteLoader("./assets/parakeet_fly.png", 5, 5),
             shoot: new SpriteLoader("./assets/parakeet_attack.png", 5, 5),
-            hurt: new SpriteLoader("./assets/parakeet_damage.png", 5, 5)
+            hurt: new SpriteLoader("./assets/parakeet_damage.png", 5, 5),
+            fall: new SpriteLoader("./assets/parakeet_fall.png", 5, 5)
         };
 
         this.currentAnimation = "fly"; 
@@ -28,6 +29,7 @@ class Player {
         this.frameCounter = 0;
 
         this.framesSinceHurt = 0;
+        this.hasHitGround = false;
     }
 
     // Update player
@@ -35,11 +37,26 @@ class Player {
         this.spdY += this.gravity;
         this.y += this.spdY;
 
-        // Set boundaries
+        // Set upper boundaries
         this.y = Math.min(
             Math.max(this.height / 2, this.y),
-            (game.height) - this.height / 2
+            game.height - this.height / 2
         );
+
+        // Fall to death
+        if (!this.hasHitGround && this.y + this.height / 2 == game.height) {
+            this.y = game.height - this.height / 2
+            this.currentAnimation = "fall";
+            this.hasHitGround = true;
+
+            setTimeout(() => {
+                game.state = "gameover";
+                this.dead = true;
+            }, 800);
+        }
+
+
+        if (this.currentAnimation === "fall") return;
 
         // Visuals logic
         if (game.savatteCollected) {
@@ -56,14 +73,14 @@ class Player {
             }
         }
 
-        // Jump
+        // Flap
         if (game.keys["Space"]) {
             this.spdY = this.flapPower;
         }
 
         // Avoy savatte
-        if (game.keys["KeyF"] && game.savatteCollected) {
-            game.keys["KeyF"] = false;
+        if (game.keys["Enter"] && game.savatteCollected) {
+            game.keys["Enter"] = false;
             game.savatteCollected = false;
 
             this.shoot(game);

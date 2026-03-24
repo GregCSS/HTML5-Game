@@ -6,22 +6,53 @@ import savattePickupArgs from "./items/savattePickup.js";
 import Player from "./player.js";
 import Spawner from "./spawner.js";
 import SpriteLoader from "./spriteloader.js";
+import Background from "./background.js";
+import Ui from "./ui.js";
 
 class Game extends EventTarget {
-    constructor(ctx, width, height) {
+    constructor(ctx, width, height, ui) {
         super();
 
         this.ctx = ctx;
         this.width = width;
-        this.height = height;        
+        this.height = height;
+        this.ui = ui;
 
+        // UI elements for screen menu, gameover and victory
+        this.uiElement = {
+            title: new Image(),
+            tutorial: new Image(),
+            start: new Image(),
+            restart: new Image(),
+            again: new Image(),
+            gameover: new Image(),
+            victory: new Image()
+        };
+        this.uiElement.title.src = "./assets/ui/title.png";
+        this.uiElement.tutorial.src = "./assets/ui/tutorial.png";
+        this.uiElement.start.src = "./assets/ui/start.png";
+        this.uiElement.restart.src = "./assets/ui/restart.png";
+        this.uiElement.again.src = "./assets/ui/again.png";
+        this.uiElement.gameover.src = "./assets/ui/gameover.png";
+        this.uiElement.victory.src = "./assets/ui/victory.png";
+
+        this.background = new Background(this.ctx); // Backdrop
+        this.victoryTime = null; // store score
+        
         this.state = "menu";
 
         // Creating player and enemy
         this.player = new Player(this.ctx);
         this.playerHP = 5;
 
-        this.enemy = new Enemy(this.ctx, this.width * 0.85, this.height / 2, 400, 400, this.player);
+        this.enemy = new Enemy(
+            this.ctx, 
+            this.width * 0.85, 
+            this.height / 2, 
+            500, 
+            500, 
+            this.player
+        );
         this.enemyHP = 5;
 
         // Creates a spawner for weapons
@@ -76,6 +107,7 @@ class Game extends EventTarget {
                 setTimeout(() => {
                     this.state = "victory";
                     this.enemy.dead = true;
+                    this.victoryTime = this.ui.getTimeString();
                 }, 1000);
             }
         })
@@ -115,139 +147,91 @@ class Game extends EventTarget {
     // Runs every animation frame
     nextFrame = () => {
         this.frameTimer += 1;
-        this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
-        // Display menu
-        if (this.state == "menu") {
-            this.drawMenu();
-            
-            // Press "Enter to start"
-            if (this.keys["Enter"]) {
-                this.keys["Enter"] = false;
-                this.state = "playing";
-            }
-
-            requestAnimationFrame(this.nextFrame);
-            return;
-        }
-
-        // Show game over screen
-        if (this.state === "gameover") {
-            this.drawGameOver();
-
-            if (this.keys["Enter"]) {
-                location.reload(); // Restarts
-            }
-
-            requestAnimationFrame(this.nextFrame);
-            return;
-        }
-
-        // Show victory screen
-        if (this.state === "victory") {
-            this.drawVictory();
-
-            if (this.keys["Enter"]) {
-                location.reload(); // Restarts
-            }
-
-            requestAnimationFrame(this.nextFrame);
-            return;
+        // Handle Enter key for state transitions
+        if (this.state === "menu" && this.keys["Enter"]) {
+            this.keys["Enter"] = false;
+            this.state = "playing";
+        } 
+        else if ((this.state === "gameover" || this.state === "victory") && this.keys["Enter"]) {
+            location.reload(); // Restart game
         }
 
         // ------------
         //   Gameloop
         // ------------
-
-        // Update systems
-        this.savatteSpawner.update(this);
-        this.mangoSpawner.update(this);
-
-        // Update and draw every object in the game
-        this.objects.forEach(obj => {
-            obj.update(this);
-            obj.draw();
-        });
-
-        // Removes used sprites (i.e. collectables)
-        this.objects = this.objects.filter(o => !o.dead);
-        requestAnimationFrame(this.nextFrame);
+        if (this.state === "playing") {
+            // Update systems
+            this.savatteSpawner.update(this);
+            this.mangoSpawner.update(this);
+    
+            // Update and draw every object in the game
+            this.objects.forEach(obj => {
+                obj.update(this);
+                obj.draw();
+            });
+    
+            // Removes used sprites (i.e. collectables)
+            this.objects = this.objects.filter(o => !o.dead);
+        }
     }
 
     start() {
         this.nextFrame();
     }
 
-    // Shows menu
-    drawMenu() {
+    // Helpers
+    drawCenter(img, w, h, yPercent) {
+        this.ctx.drawImage(
+            img,
+            this.width / 2 - w / 2,
+            this.height * yPercent,
+            w,
+            h
+        );
+    }
+
+    drawBlurBg() {
         const ctx = this.ctx;
 
-        ctx.fillStyle = "#0a0a0a";
-        ctx.fillRect(0, 0, this.width, this.height);
+        ctx.filter = "blur(6px)";
+        ctx.drawImage(this.background.image, 0, 0, this.width, this.height);
+        ctx.filter = "none";
+    }
 
-        ctx.textAlign = "center";
-        ctx.fillStyle = "white";
+    // Shows menu
+    drawMenu() {
+        this.drawBlurBg();
 
-        ctx.font = "72px Arial";
-        ctx.fillText("PARAKEET VS POACHER", this.width / 2, this.height * 0.35);
-
-        ctx.font = "32px Arial";
-        ctx.fillText("Press ENTER to Start", this.width / 2, this.height * 0.5);
-
-        ctx.font = "20px Arial";
-        ctx.fillText("SPACE = Fly", this.width / 2, this.height * 0.6);
-        ctx.fillText("F = Throw Savatte", this.width / 2, this.height * 0.65);
+        this.drawCenter(this.uiElement.title, 1000, 800, 0.01);
+        this.drawCenter(this.uiElement.start, 500, 400, 0.4);
+        this.drawCenter(this.uiElement.tutorial, 350, 350, 0.6);
     }
 
     // Shows game over
     drawGameOver() {
-        const ctx = this.ctx;
+        this.drawBlurBg();
 
-        ctx.fillStyle = "black";
-        ctx.fillRect(0, 0, this.width, this.height);
-
-        ctx.textAlign = "center";
-
-        ctx.fillStyle = "red";
-        ctx.font = "72px Arial";
-        ctx.fillText("GAME OVER", this.width / 2, this.height * 0.4);
-
-        ctx.fillStyle = "white";
-        ctx.font = "32px Arial";
-        ctx.fillText("Press ENTER to Restart", this.width / 2, this.height * 0.55);
+        this.drawCenter(this.uiElement.gameover, 1000, 800, 0.01);
+        this.drawCenter(this.uiElement.restart, 500, 400, 0.4);
     }
 
     // Show victory screen
     drawVictory() {
-        const ctx = this.ctx;
+        this.drawBlurBg();
 
-        // Background
-        ctx.fillStyle = "#0a0a0a";
-        ctx.fillRect(0, 0, this.width, this.height);
+        this.drawCenter(this.uiElement.victory, 1000, 800, 0.01);
+        this.drawCenter(this.uiElement.again, 500, 400, 0.4);
 
-        ctx.textAlign = "center";
+        this.ctx.fillStyle = "yellow";
+        this.ctx.font = "bold 50px 'Luckiest Guy'";
+        this.ctx.textAlign = "center";
 
-        // Title
-        ctx.fillStyle = "#4CAF50";
-        ctx.font = "72px Arial";
-        ctx.fillText("VICTORY!", this.width / 2, this.height * 0.35);
-
-        // Subtitle
-        ctx.fillStyle = "white";
-        ctx.font = "32px Arial";
-        ctx.fillText("The poacher has been defeated!", this.width / 2, this.height * 0.5);
-
-        // Score display
-        ctx.font = "28px Arial";
-        ctx.fillText(`Score: ${this.score}`, this.width / 2, this.height * 0.6);
-
-        // Restart instruction
-        ctx.font = "24px Arial";
-
-        // blinking text
-        if (Math.floor(this.frameTimer / 30) % 2 === 0) {
-            ctx.fillText("Press ENTER to play again", this.width / 2, this.height * 0.75);
-        }
+        this.ctx.fillText(
+            "Time: " + this.victoryTime,
+            this.width / 2,
+            this.height * 0.7
+        );
     }
 }
 

@@ -1,58 +1,27 @@
 class Background {
-    constructor(ctx, speedModifier = 0.5) {
+    constructor(ctx) {
         this.ctx = ctx;
-        this.speedModifier = speedModifier;
+        this.image = new Image();
+        this.image.src = "./assets/background.png";
 
-        this.bg = new Image();
-        this.bg.src = "./assets/background.png";
-
-        this.frame = new Image();
-        this.frame.src = "./assets/border.png";
-
-        this.x = 0;
-        this.speed = 2 * this.speedModifier;
+        this.x = 0;          // scroll position
+        this.speed = 2;      // scroll speed
     }
 
     update() {
-        const canvasWidth = this.ctx.canvas.width;
-
         this.x -= this.speed;
-
-        // seamless loop
-        if (this.x <= -canvasWidth) {
-            this.x = 0;
-        }
+        if (this.x <= -window.innerWidth) this.x = 0;
     }
 
     draw() {
-        const canvasWidth = this.ctx.canvas.width;
-        const canvasHeight = this.ctx.canvas.height;
+        const w = window.innerWidth;
+        const h = window.innerHeight;
 
-        // scrolling jungle background
-        this.ctx.drawImage(
-            this.bg,
-            this.x,
-            0,
-            canvasWidth,
-            canvasHeight
-        );
-
-        this.ctx.drawImage(
-            this.bg,
-            this.x + canvasWidth,
-            0,
-            canvasWidth,
-            canvasHeight
-        );
-
-        // static frame overlay
-        this.ctx.drawImage(
-            this.frame,
-            0,
-            0,
-            canvasWidth,
-            canvasHeight
-        );
+        // Draw scrolling background twice for seamless effect
+        if (this.image.complete) {
+            this.ctx.drawImage(this.image, this.x, 0, w, h);
+            this.ctx.drawImage(this.image, this.x + w, 0, w, h);
+        }
     }
 }
 
