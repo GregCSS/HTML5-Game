@@ -7,39 +7,28 @@ import Player from "./player.js";
 import Spawner from "./spawner.js";
 import SpriteLoader from "./spriteloader.js";
 import Background from "./background.js";
+import Music from "./music.js";
 import Ui from "./ui.js";
 
 class Game extends EventTarget {
-    constructor(ctx, width, height, ui) {
+    constructor(ctx, width, height) {
         super();
 
         this.ctx = ctx;
         this.width = width;
         this.height = height;
-        this.ui = ui;
 
-        // UI elements for screen menu, gameover and victory
-        this.uiElement = {
-            title: new Image(),
-            tutorial: new Image(),
-            start: new Image(),
-            restart: new Image(),
-            again: new Image(),
-            gameover: new Image(),
-            victory: new Image()
-        };
-        this.uiElement.title.src = "./assets/ui/title.png";
-        this.uiElement.tutorial.src = "./assets/ui/tutorial.png";
-        this.uiElement.start.src = "./assets/ui/start.png";
-        this.uiElement.restart.src = "./assets/ui/restart.png";
-        this.uiElement.again.src = "./assets/ui/again.png";
-        this.uiElement.gameover.src = "./assets/ui/gameover.png";
-        this.uiElement.victory.src = "./assets/ui/victory.png";
-
+        // Background
         this.background = new Background(this.ctx); // Backdrop
         this.victoryTime = null; // store score
-        
         this.state = "menu";
+
+        // Background music
+        this.music = new Music();
+        this.music.play(); // Start music by default
+
+        // Create UI
+        this.ui = new Ui(this.ctx, this);
 
         // Creating player and enemy
         this.player = new Player(this.ctx);
@@ -76,7 +65,11 @@ class Game extends EventTarget {
 
         // Handle player input
         this.keys = {};
-        window.addEventListener("keydown", e => this.keys[e.code] = true);
+        window.addEventListener("keydown", e => {
+            this.keys[e.code] = true;
+            // Press 'm' to mute/play music
+            if (e.code === "KeyM") { this.music.pressMute(); }
+        });
         window.addEventListener("keyup", e => this.keys[e.code] = false);
 
         // Adding handlers
@@ -161,6 +154,10 @@ class Game extends EventTarget {
         //   Gameloop
         // ------------
         if (this.state === "playing") {
+            // Update background
+            this.background.update();
+            this.background.draw();
+
             // Update systems
             this.savatteSpawner.update(this);
             this.mangoSpawner.update(this);
@@ -173,65 +170,22 @@ class Game extends EventTarget {
     
             // Removes used sprites (i.e. collectables)
             this.objects = this.objects.filter(o => !o.dead);
+
+            // Draw HUD
+            this.ui.draw();
+        } 
+        // Draw UI for each game state
+        else if (this.state === "menu") {
+            this.ui.drawMenu();
+        }  else if (this.state === "gameover") {
+            this.ui.drawGameOver();
+        } else if (this.state === "victory") {
+            this.ui.drawVictory(this.victoryTime);
         }
     }
 
     start() {
         this.nextFrame();
-    }
-
-    // Helpers
-    drawCenter(img, w, h, yPercent) {
-        this.ctx.drawImage(
-            img,
-            this.width / 2 - w / 2,
-            this.height * yPercent,
-            w,
-            h
-        );
-    }
-
-    drawBlurBg() {
-        const ctx = this.ctx;
-
-        ctx.filter = "blur(6px)";
-        ctx.drawImage(this.background.image, 0, 0, this.width, this.height);
-        ctx.filter = "none";
-    }
-
-    // Shows menu
-    drawMenu() {
-        this.drawBlurBg();
-
-        this.drawCenter(this.uiElement.title, 1000, 800, 0.01);
-        this.drawCenter(this.uiElement.start, 500, 400, 0.4);
-        this.drawCenter(this.uiElement.tutorial, 350, 350, 0.6);
-    }
-
-    // Shows game over
-    drawGameOver() {
-        this.drawBlurBg();
-
-        this.drawCenter(this.uiElement.gameover, 1000, 800, 0.01);
-        this.drawCenter(this.uiElement.restart, 500, 400, 0.4);
-    }
-
-    // Show victory screen
-    drawVictory() {
-        this.drawBlurBg();
-
-        this.drawCenter(this.uiElement.victory, 1000, 800, 0.01);
-        this.drawCenter(this.uiElement.again, 500, 400, 0.4);
-
-        this.ctx.fillStyle = "yellow";
-        this.ctx.font = "bold 50px 'Luckiest Guy'";
-        this.ctx.textAlign = "center";
-
-        this.ctx.fillText(
-            "Time: " + this.victoryTime,
-            this.width / 2,
-            this.height * 0.7
-        );
     }
 }
 

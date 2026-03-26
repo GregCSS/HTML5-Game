@@ -20,8 +20,7 @@ class Player {
         this.animations = {
             fly: new SpriteLoader("./assets/parakeet_fly.png", 5, 5),
             shoot: new SpriteLoader("./assets/parakeet_attack.png", 5, 5),
-            hurt: new SpriteLoader("./assets/parakeet_damage.png", 5, 5),
-            fall: new SpriteLoader("./assets/parakeet_fall.png", 5, 5)
+            hurt: new SpriteLoader("./assets/parakeet_damage.png", 5, 5)
         };
 
         this.currentAnimation = "fly"; 
@@ -29,7 +28,6 @@ class Player {
         this.frameCounter = 0;
 
         this.framesSinceHurt = 0;
-        this.hasHitGround = false;
     }
 
     // Update player
@@ -42,21 +40,6 @@ class Player {
             Math.max(this.height / 2, this.y),
             game.height - this.height / 2
         );
-
-        // Fall to death
-        if (!this.hasHitGround && this.y + this.height / 2 == game.height) {
-            this.y = game.height - this.height / 2
-            this.currentAnimation = "fall";
-            this.hasHitGround = true;
-
-            setTimeout(() => {
-                game.state = "gameover";
-                this.dead = true;
-            }, 800);
-        }
-
-
-        if (this.currentAnimation === "fall") return;
 
         // Visuals logic
         if (game.savatteCollected) {
@@ -123,10 +106,6 @@ class Player {
         // Animation for the savatte
         savatteArgs.spriteLoader = new SpriteLoader(savatteArgs.spriteSrc, 3, 3);
         const savatte = new Projectile(savatteArgs);
-
-        // bullet.addEventListener("hit", e => {
-        //     game.dispatchEvent(new CustomEvent("enemyHit", { detail: e.detail }));
-        // });
 
         game.objects.push(savatte);
     }
