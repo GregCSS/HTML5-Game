@@ -101,7 +101,7 @@ class Game extends EventTarget {
                     this.state = "victory";
                     this.enemy.dead = true;
                     this.victoryTime = this.ui.getTimeString();
-                }, 250);
+                }, 575);
             }
         })
         
@@ -151,7 +151,6 @@ class Game extends EventTarget {
 
         // Restart game
         else if ((this.state === "gameover" || this.state === "victory") && this.keys["Enter"]) {
-            this.state = "playing";
             this.ui.startTime = Date.now();
             
             // Resets player, enemy and collectibles
@@ -166,6 +165,7 @@ class Game extends EventTarget {
             this.enemy.y = this.height / 2
 
             this.objects = [];
+            this.state = "playing"; // Restarts
         }
 
         // ------------
@@ -204,8 +204,27 @@ class Game extends EventTarget {
             this.ui.drawMenu();
         }  else if (this.state === "gameover") {
             this.ui.drawGameOver();
+            
+            // Reset animations
+            this.player.animations["fly"].reset();
+            this.player.animations["shoot"].reset();
+            this.player.animations["hurt"].reset();
+
+            this.enemy.animations["idle"].reset();
+            this.enemy.animations["shoot"].reset();
+            this.enemy.animations["hurt"].reset();
+
         } else if (this.state === "victory") {
             this.ui.drawVictory(this.victoryTime);
+
+            // Reset animations
+            this.player.animations["fly"].reset();
+            this.player.animations["shoot"].reset();
+            this.player.animations["hurt"].reset();
+
+            this.enemy.animations["idle"].reset();
+            this.enemy.animations["shoot"].reset();
+            this.enemy.animations["hurt"].reset();
         }
     }
 
